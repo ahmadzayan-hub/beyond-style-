@@ -1,121 +1,199 @@
-# Beyond Style UAE — Customer Conversion & Order Control Agent
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="Beyond Style UAE Order Control Console" width="100%">
+</p>
 
-A **human-approved sales operating console** for Beyond Style UAE
-(BEYOND CONNECT GENERAL TRADING L.L.C). This is **not** an auto-reply bot. It is
-a control tower for UAE social commerce: the agent **drafts** replies and order
-actions, the owner **approves**, the system **tracks**, and the dashboard
-**learns**. Automation comes later — only after the system proves it does not
-make pricing, delivery, stock, or privacy mistakes.
+<p align="center">
+  <strong>A human-approved sales console for UAE social commerce. The agent drafts, the owner approves, the system tracks.</strong>
+</p>
+
+<p align="center">
+  <img alt="Next.js 14" src="https://img.shields.io/badge/Next.js-14_App_Router-000000?logo=nextdotjs&logoColor=white">
+  <img alt="React 18" src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white">
+  <img alt="Tailwind CSS 3" src="https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white">
+  <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Postgres-3FCF8E?logo=supabase&logoColor=white">
+  <img alt="Vitest" src="https://img.shields.io/badge/tested_with-Vitest-6E9F18?logo=vitest&logoColor=white">
+</p>
+
+## Overview
+
+Beyond Style UAE (BEYOND CONNECT GENERAL TRADING L.L.C) sells fashion
+jewellery and accessories through Instagram, WhatsApp and TikTok. This
+repository is the internal **order control console**. It is not an
+auto-reply bot. The agent drafts replies and order actions, the owner
+approves them, and the dashboard tracks conversion, payment and delivery.
+Automation comes later, only after the system proves it does not make
+pricing, delivery, stock or privacy mistakes.
 
 > The agent drafts → you approve → the system tracks → the dashboard learns → automation comes later.
 
-## Why this shape
+Every drafted customer reply goes through a **guardrail engine** before an
+operator can approve and send it. If you automate too early, you scale
+mistakes. This MVP scales discipline instead.
 
-If you automate too early, you scale mistakes. This MVP scales *discipline*
-instead: every drafted customer reply is forced through a **guardrail engine**
-before an operator can approve and send it.
+## Key features
 
-## Stack
+- **Intake to approval flow.** Paste a customer message and known facts (plus an optional screenshot). `POST /api/analyze` returns a structured analysis, guardrail findings and a draft reply to review and copy.
+- **One-click test scenarios.** The intake page can load the §30 test conversations from `supabase/seed.sql` (Arabic name request, phone and address in a DM, "How much?", supplier pitch) so you can try the flow without typing.
+- **Guardrail engine.** Pure, unit-tested checks for product claims, privacy, price, stock, delivery, payment, VAT and Arabic names (table below).
+- **Operations rules.** QC checklist, human-approval matrix, fraud screening and journey-stage playbook in `src/lib/operations.ts`.
+- **Control tower dashboard.** Revenue, payment, delivery and lead KPIs, a 14-day revenue chart and a "needs your attention" list.
+- **Record pages.** Customers, orders, inventory, offers, payments, couriers, suppliers, reviews, reports, prompts, settings and audit log.
+- **Demo mode.** With no Supabase project, every page renders from an in-memory sample dataset and shows a clear "Demo mode" banner.
+- **Pluggable AI provider.** `mock`, OpenAI, Anthropic, Gemini, Groq, Together or any OpenAI-compatible endpoint, chosen by env. No keys in code.
+- **NotebookLM integration.** Google OAuth 2.0 with AES-256-GCM encrypted tokens in an httpOnly cookie.
+- **Mobile ready.** Collapsible navigation, and wide tables scroll inside their card so no page scrolls sideways at phone width.
 
-- **Next.js 14** (App Router) + **TypeScript**
-- **Tailwind CSS**
-- **Supabase** (Postgres + Auth + Storage)
-- **Configurable AI provider wrapper** — OpenAI / Anthropic (Claude) / Gemini /
-  `mock`. No API keys are hard-coded; everything is env-driven.
-- **Vitest** for the guardrail/logic test suite.
+## Screenshots
+
+Captured from a local production build in demo mode (no Supabase, `AI_PROVIDER=mock`). All figures are synthetic sample data.
+
+| Desktop (1440 x 900) | Mobile (390 x 844) |
+|---|---|
+| ![Dashboard, desktop](docs/assets/screenshots/dashboard-desktop.png) | ![Dashboard, mobile](docs/assets/screenshots/dashboard-mobile.png) |
+| ![Intake with a test scenario analysed, desktop](docs/assets/screenshots/intake-analysis-desktop.png) | ![Intake with a test scenario analysed, mobile](docs/assets/screenshots/intake-analysis-mobile.png) |
 
 ## Quick start
 
+Run these from the repository root (the Next.js console lives at the root).
+
 ```bash
-cd beyond-style-uae
-npm install
-cp .env.example .env.local      # fill in Supabase + AI provider
-npm run test                    # 20 guardrail/logic tests
+npm ci
+cp .env.example .env.local      # optional: Supabase + AI provider
+npm run test                    # guardrail, OAuth and intake tests
 npm run dev                     # http://localhost:3000
 ```
 
-The app runs **before** Supabase is configured (pages show a "connect Supabase"
-hint) and **before** an AI key is set (`AI_PROVIDER=mock` returns placeholder
-analysis so you can see the flow end-to-end).
+The app runs **before** Supabase is configured (demo data plus a banner)
+and **before** an AI key is set (`AI_PROVIDER=mock` returns placeholder
+analysis so you can see the flow end to end).
 
 ### Database
 
 In the Supabase SQL editor (or via the CLI), run in order:
 
-1. `supabase/migrations/0001_schema.sql` — all tables + RLS.
-2. `supabase/seed.sql` — default catalogue, offers, couriers, prompts,
-   settings, and the §30 test-scenario conversations.
+1. `supabase/migrations/0001_schema.sql`: all tables and RLS.
+2. `supabase/migrations/0002_growth.sql`: disputes, VIP tracking and inventory velocity fields.
+3. `supabase/seed.sql`: default catalogue, offers, couriers, prompts, settings and the §30 test-scenario conversations.
 
 ### Environment
 
+`.env.example` documents every variable. None are required to build.
+
 | Var | Purpose |
 | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client |
-| `SUPABASE_SERVICE_ROLE_KEY` | server-side privileged writes |
-| `AI_PROVIDER` | `openai` \| `anthropic` \| `gemini` \| `mock` |
-| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` | provider keys |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client (demo mode when unset) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side privileged writes |
+| `AI_PROVIDER` | `mock` (default), `openai`, `anthropic`, `gemini`, `groq`, `together`, `openai_compatible` |
+| Provider keys and models | `OPENAI_*`, `ANTHROPIC_*`, `GEMINI_*`, `GROQ_*`, `TOGETHER_*`, `OPENAI_COMPATIBLE_*` |
+| `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | NotebookLM integration (page shows "not configured" when unset) |
+| `GOOGLE_OAUTH_REDIRECT_URI`, `NOTEBOOKLM_OAUTH_SCOPES`, `INTEGRATION_TOKEN_SECRET` | Optional integration settings |
+| `NEXT_PUBLIC_APP_URL` | Optional. Canonical URL for metadata |
+
+## Scripts
+
+| Script | What it does |
+|---|---|
+| `npm run dev` | Next.js dev server |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm run lint` | `next lint` |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run test` | Vitest |
 
 ## The control tower (guardrail engine)
 
 `src/lib/guardrails.ts` runs every drafted reply through checks. A **fail**
-blocks the Approve button; a **warn** surfaces a caution; some findings force
-**owner approval**:
+blocks the Approve button, a **warn** surfaces a caution, and some findings
+force **owner approval**.
 
 | Guard | Rule |
 | --- | --- |
-| Claim (§7) | Blocks "real gold", waterproof, anti-tarnish, etc. without supplier evidence; auto-rewords to safe wording |
-| Privacy (§14) | Detects phone / address / payment data leaking into a reply |
-| Price (§6) | Requires an active, unexpired offer before quoting; price-first |
+| Claim (§7) | Blocks "real gold", waterproof, anti-tarnish and similar claims without supplier evidence; rewords to safe wording |
+| Privacy (§14) | Detects phone, address or payment data leaking into a reply |
+| Price (§6) | Requires an active, unexpired offer before quoting; price first |
 | Stock (§8) | Blocks unverified in-stock promises |
-| Delivery (§10) | Blocks same-day-outside-Dubai without courier confirmation |
+| Delivery (§10) | Blocks same-day outside Dubai without courier confirmation |
 | Payment (§9) | No courier dispatch until payment is confirmed |
-| VAT (§6/§9) | Flags missing VAT line when applicable |
+| VAT (§6/§9) | Flags a missing VAT line when applicable |
 | Arabic name (§4) | Never blind-transliterates; falls back to أستاذة / أستاذ |
-| Length / answered / payment-step (§5/§29) | Keeps replies short, on-point, and converting |
+| Length / answered / payment step (§5/§29) | Keeps replies short, on point and converting |
 
-Plus: QC checklist (§11), human-approval matrix (§24), fraud screening (§23),
-and the journey-stage playbook (§16) live in `src/lib/operations.ts`.
+## Project structure
 
-## Core flow (acceptance §31, §33)
+```
+src/
+  app/                  App Router pages + API routes
+    api/analyze/        POST analysis endpoint
+    api/integrations/   NotebookLM OAuth routes
+    intake/             intake → analysis → approval (flagship flow)
+  components/           Nav, AnalysisPanel, RecordPage, charts, ui
+  lib/
+    guardrails.ts       control tower checks (pure, tested)
+    arabic-names.ts     name accuracy (pure, tested)
+    operations.ts       QC, approval matrix, playbook, fraud
+    intake-samples.ts   §30 test scenarios for the intake form (tested)
+    ai/                 provider wrapper, prompts, analysis pipeline
+    data.ts             server reads with demo fallback
+    demo/seed.ts        in-memory demo dataset
+supabase/               migrations + seed
+tests/                  Vitest suites
+beyond-style-uae/       separate Vite + Hono customer storefront (own README)
+```
 
-`/intake` → paste a customer message + known facts (+ optional screenshot) →
-`POST /api/analyze` → structured `AnalysisOutput` JSON + guardrail findings →
-operator reviews badges, copies the (possibly auto-corrected) reply, and
-**Approves to send**.
+## Architecture
 
-## Review scorecard
+```mermaid
+flowchart LR
+  O[Operator browser] --> N[Next.js SSR pages]
+  O -->|POST /api/analyze| A[Analysis pipeline]
+  A --> P[AI provider wrapper: mock or live]
+  A --> G[Guardrail engine: pure functions]
+  N -->|reads| S[(Supabase)]
+  N -.->|no env| D[In-memory demo data]
+```
 
-| Area | Where it lives |
-| --- | --- |
-| Customer intake | `/intake` (text + screenshot) |
-| AI analysis (intent/persona/product/risk/next action) | `src/lib/ai/analyze.ts` |
-| Arabic name handling | `src/lib/arabic-names.ts` (tested) |
-| Price / stock / delivery / payment control | `src/lib/guardrails.ts` (tested) |
-| Privacy detection | guardrails + intake pre-check |
-| QC checklist | `src/lib/operations.ts` (tested) |
-| Dashboard (conversion / payment / delivery) | `/` |
-| Daily & weekly improvement loops | `/reports` |
+More detail in [`DEVELOPER_NOTES.md`](./DEVELOPER_NOTES.md) and the threat
+model in [`SECURITY.md`](./SECURITY.md).
 
-## Tests
+## Deploy on Vercel
 
-`npm run test` covers the §30 business scenarios against the pure logic:
-real-gold claim, privacy leak, unverified stock, same-day Sharjah delivery,
-dispatch-before-payment, VAT math, Arabic name mapping (Rehab→رحاب, Kay kept
-as-is), QC gating, approval matrix, and fraud signals.
+`vercel.json` at the root is already configured.
 
-## Pages (§26)
+| Setting | Value |
+|---|---|
+| Framework preset | Next.js |
+| Root directory | `./` (repository root) |
+| Install command | `npm ci` |
+| Build command | `npm run build` |
+| Output directory | `.next` |
+| Environment variables | Optional. See the table above. Without them the console runs in demo mode with the mock provider |
 
-Login · Dashboard · New Conversation (intake) · Customer Inbox · Customers ·
-Orders · Inventory · Offers · Payments · Courier Tracking · Suppliers · Reviews ·
-Reports & Reviews · Integrations · Settings · Prompt Management · Audit Log.
+The storefront in `beyond-style-uae/` is a separate project. Deploy it as
+its own Vercel project with root directory `beyond-style-uae` (see its README).
 
-### Integrations — NotebookLM (Google OAuth)
+## Status and known limitations
 
-`/integrations` connects the console to NotebookLM via Google OAuth 2.0
-(authorization-code flow). Set `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`
-(see `.env.example`), add `<origin>/api/integrations/notebooklm/callback` as an
-authorized redirect URI in Google Cloud Console, then click **Connect**. Tokens
-are AES-256-GCM-encrypted in an httpOnly cookie — no DB required, nothing exposed
-to the browser. The page shows a "not configured" state until the env is set.
+Phase 1 of [`ROADMAP.md`](./ROADMAP.md) (control tower MVP).
 
-See `DEVELOPER_NOTES.md` for architecture details and `ROADMAP.md` for phases.
+- Routes are not yet gated by a session. `/login` works with Supabase, but there is no `middleware.ts`. Do not expose a deployment with live data publicly until it exists.
+- Record pages are read-only lists. Create and edit forms are the next step.
+- Screenshots are sent to the AI for analysis but not yet stored in Supabase Storage.
+- Daily and weekly reviews show the section structure and KPIs. Auto-drafting is a follow-up.
+- `.github/workflows/nextjs.yml` targets GitHub Pages static export. This app has API routes and server rendering, so that workflow is not a working deploy path. Vercel is.
+
+## الملخص بالعربية
+
+<div dir="rtl" lang="ar">
+
+هذا المستودع هو **لوحة التحكم الداخلية بالطلبات** لمتجر Beyond Style UAE (شركة بيوند كونكت للتجارة العامة ذ.م.م).
+اللوحة ليست نظام ردود آلية: يقوم الوكيل بصياغة مسودة الرد، ويعتمدها المالك، ثم يتتبّع النظام التحويل والدفع والتوصيل.
+تمرّ كل مسودة رد عبر محرّك ضوابط يمنع الادعاءات غير الموثّقة عن المنتج، وتسريب البيانات الشخصية، وعروض الأسعار غير المعتمدة، ووعود المخزون أو التوصيل غير المؤكَّدة.
+تعمل اللوحة دون إعداد Supabase باستخدام بيانات تجريبية واضحة التمييز، ودون مفتاح ذكاء اصطناعي باستخدام مزوّد تجريبي.
+لا تزال المسارات غير محمية بجلسة تسجيل دخول، لذا لا يُنصح بنشر نسخة مرتبطة ببيانات حقيقية للعامة قبل إضافة هذه الحماية.
+
+</div>
+
+## Ownership
+
+Owned by BEYOND CONNECT GENERAL TRADING L.L.C, Dubai. No open-source license file is included, so all rights are reserved by default.
