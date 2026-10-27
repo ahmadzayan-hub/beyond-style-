@@ -2,6 +2,8 @@
   <img src="docs/assets/banner.svg" alt="Beyond Style UAE Order Control Console" width="100%">
 </p>
 
+<p align="center"><img src="docs/assets/hero.jpg" alt="Concept image (AI-generated). Not a product screenshot." width="100%"><br><sub><em>Concept image (AI-generated). Not a product screenshot.</em></sub></p>
+
 <p align="center">
   <strong>A human-approved sales console for UAE social commerce. The agent drafts, the owner approves, the system tracks.</strong>
 </p>
