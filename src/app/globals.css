@@ -70,6 +70,11 @@ body {
 .muted { @apply text-sm text-gray-500; }
 
 /* ---- Table polish ---- */
+/* Grid and flex children default to min-width:auto, so a wide table would
+   push the whole page past the viewport on phones. Cards may shrink, and a
+   card that holds a table scrolls sideways instead of the page. */
+.card, .card-tight { min-width: 0; }
+.card:has(.tbl), .card-tight:has(.tbl) { overflow-x: auto; }
 .tbl { @apply w-full text-sm; }
 .tbl thead tr { @apply border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500; }
 .tbl tbody tr { @apply border-b border-gray-100 hover:bg-gray-50; }

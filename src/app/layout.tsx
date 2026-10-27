@@ -124,7 +124,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <aside className="hidden w-64 shrink-0 border-r border-cream/50 bg-white md:block">
             <Nav badges={badges} />
           </aside>
-          <main className="flex-1 p-4 md:p-8">
+          <main className="min-w-0 flex-1 p-4 md:p-8">
             <div className="md:hidden mb-3">
               <Nav mobile badges={badges} />
             </div>
